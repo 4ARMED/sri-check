@@ -34,17 +34,19 @@ if len(script_tags) > 0:
             remote_script_tags.append(script_tag)
 
     if len(remote_script_tags) > 0:
-        print("Script tags without SRI:\n")
+        if args.generate:
+            print("[*] Script tags without SRI:\n")
+
         for remote_script_tag in remote_script_tags:
             print(remote_script_tag)
 
             if args.generate:
                 generated_script_tags.append(generate_sha(remote_script_tag))
     else:
-        print("[*] no script tags found without integrity attribute")
+        print("[*] No script tags found without integrity attribute")
 
 
     if len(generated_script_tags) > 0:
-        print("\nGenerated SRIs:\n")
+        print("\n[*] Generated SRIs:\n")
         for generated_script_tag in generated_script_tags:
             print(generated_script_tag)
