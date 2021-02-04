@@ -38,6 +38,8 @@ Now you can run the script which in its most basic form takes one argument, the 
 
 ```bash
 $ ./sri-check.py https://kubernetes.io/
+Script tags without SRI:
+
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
 <script async="" src="https://www.google-analytics.com/analytics.js"></script>
 ```
