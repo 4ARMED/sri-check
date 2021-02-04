@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-import bs4
+import base64
+import hashlib
 import requests
-import sys
+from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser()
@@ -12,10 +13,15 @@ parser.add_argument("url", help="Target URL to check for SRI")
 args = parser.parse_args()
 
 def generate_sha(tag):
+    resource_data = requests.get(tag['src']).content
+    integrity_checksum = base64.b64encode(hashlib.sha384(resource_data).digest()).decode('utf-8')
+    tag['integrity'] = f"sha384-{integrity_checksum}"
+    tag['crossorigin'] = 'anonymous'
+
     return tag
 
 html = requests.get(args.url).content
-soup = bs4.BeautifulSoup(html, features='html.parser')
+soup = BeautifulSoup(html, features='html.parser')
 script_tags = [tag for tag in soup.find_all('script', attrs={'src':True, 'integrity':None})]
 
 if len(script_tags) > 0:
