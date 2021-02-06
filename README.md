@@ -37,7 +37,7 @@ $ pip install -r requirements.txt
 Now you can run the script which in its most basic form takes one argument, the URL you wish to check.
 
 ```bash
-$ ./sri-check.py https://kubernetes.io/
+$ ./sri-check https://kubernetes.io/
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
 <script async="" src="https://www.google-analytics.com/analytics.js"></script>
 ```
@@ -49,7 +49,7 @@ $ ./sri-check.py https://kubernetes.io/
 Optionally you may wish to output updated script tags with the SRI hash calculated. You can do this by specifying the `--generate` flag.
 
 ```bash
-$ ./sri-check.py --generate https://kubernetes.io/
+$ ./sri-check --generate https://kubernetes.io/
 [*] Script tags without SRI:
 
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
