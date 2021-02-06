@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-g", "--generate", help="Generate sha384 hashes for script tags", action="store_true")
+parser.add_argument("-a", "--all", help="Output detected script tags regardless of SRI status", action="store_true")
 parser.add_argument("url", help="Target URL to check for SRI")
 args = parser.parse_args()
 
@@ -22,7 +23,10 @@ def generate_sha(tag):
 
 html = requests.get(args.url).content
 soup = BeautifulSoup(html, features='html.parser')
-script_tags = [tag for tag in soup.find_all('script', attrs={'src':True, 'integrity':None})]
+if args.all:
+    script_tags = [tag for tag in soup.find_all('script', attrs={'src':True})]
+else:
+    script_tags = [tag for tag in soup.find_all('script', attrs={'src':True, 'integrity':None})]
 
 if len(script_tags) > 0:
     remote_script_tags = []
