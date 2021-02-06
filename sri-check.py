@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-g", "--generate", help="Generate sha384 hashes for script tags", action="store_true")
-parser.add_argument("-a", "--all", help="Output detected script tags regardless of SRI status", action="store_true")
+parser.add_argument("-g", "--generate", help="Generate sha384 hashes for resources", action="store_true")
+parser.add_argument("-a", "--all", help="Output detected script/link tags regardless of SRI status", action="store_true")
 parser.add_argument("url", help="Target URL to check for SRI")
 args = parser.parse_args()
 
@@ -24,33 +24,33 @@ def generate_sha(tag):
 html = requests.get(args.url).content
 soup = BeautifulSoup(html, features='html.parser')
 if args.all:
-    script_tags = [tag for tag in soup.find_all('script', attrs={'src':True})]
+    resource_tags = [tag for tag in soup.find_all(['script', 'link'], attrs={'src':True})]
 else:
-    script_tags = [tag for tag in soup.find_all('script', attrs={'src':True, 'integrity':None})]
+    resource_tags = [tag for tag in soup.find_all(['script', 'link'], attrs={'src':True, 'integrity':None})]
 
-if len(script_tags) > 0:
-    remote_script_tags = []
-    generated_script_tags = []
+if len(resource_tags) > 0:
+    remote_resource_tags = []
+    generated_resource_tags = []
 
-    for script_tag in script_tags:
-        parsed_tag = urlparse(script_tag['src'])
+    for resource_tag in resource_tags:
+        parsed_tag = urlparse(resource_tag['src'])
         if parsed_tag.scheme in {'http', 'https'}:
-            remote_script_tags.append(script_tag)
+            remote_resource_tags.append(resource_tag)
 
-    if len(remote_script_tags) > 0:
+    if len(remote_resource_tags) > 0:
         if args.generate:
-            print("[*] Script tags without SRI:\n")
+            print("[*] Resource tags without SRI:\n")
 
-        for remote_script_tag in remote_script_tags:
-            print(remote_script_tag)
+        for remote_resource_tag in remote_resource_tags:
+            print(remote_resource_tag)
 
             if args.generate:
-                generated_script_tags.append(generate_sha(remote_script_tag))
+                generated_resource_tags.append(generate_sha(remote_resource_tag))
     else:
-        print("[*] No script tags found without integrity attribute")
+        print("[*] No resource tags found without integrity attribute")
 
 
-    if len(generated_script_tags) > 0:
+    if len(generated_resource_tags) > 0:
         print("\n[*] Generated SRIs:\n")
-        for generated_script_tag in generated_script_tags:
-            print(generated_script_tag)
+        for generated_resource_tag in generated_resource_tags:
+            print(generated_resource_tag)
