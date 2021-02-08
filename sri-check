@@ -13,8 +13,9 @@ parser.add_argument("-a", "--all", help="Output detected script/link tags regard
 parser.add_argument("url", help="Target URL to check for SRI")
 args = parser.parse_args()
 
-def generate_sha(tag):
-    resource_data = requests.get(tag['src']).content
+def generate_sha(remote_resource_tag):
+    tag = remote_resource_tag['tag']
+    resource_data = requests.get(remote_resource_tag['tag'][remote_resource_tag['attr']]).content
     integrity_checksum = base64.b64encode(hashlib.sha384(resource_data).digest()).decode('utf-8')
     tag['integrity'] = f"sha384-{integrity_checksum}"
     tag['crossorigin'] = 'anonymous'
@@ -23,26 +24,40 @@ def generate_sha(tag):
 
 html = requests.get(args.url).content
 soup = BeautifulSoup(html, features='html.parser')
+
+resource_tags = []
+
 if args.all:
-    resource_tags = [tag for tag in soup.find_all(['script', 'link'], attrs={'src':True})]
+    script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True})]
+    link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True})]
+    resource_tags.extend(script_tags)
+    resource_tags.extend(link_tags)
 else:
-    resource_tags = [tag for tag in soup.find_all(['script', 'link'], attrs={'src':True, 'integrity':None})]
+    script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True, 'integrity':None})]
+    link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True, 'integrity':None})]
+    resource_tags.extend(script_tags)
+    resource_tags.extend(link_tags)
 
 if len(resource_tags) > 0:
     remote_resource_tags = []
     generated_resource_tags = []
 
     for resource_tag in resource_tags:
-        parsed_tag = urlparse(resource_tag['src'])
+        attribute = ""
+        for potential_attribute in ['src', 'href']:
+            if potential_attribute in resource_tag.attrs:
+                attribute = potential_attribute
+
+        parsed_tag = urlparse(resource_tag[attribute])
         if parsed_tag.scheme in {'http', 'https'}:
-            remote_resource_tags.append(resource_tag)
+            remote_resource_tags.append({'tag': resource_tag, 'attr': attribute})
 
     if len(remote_resource_tags) > 0:
         if args.generate:
             print("[*] Resource tags without SRI:\n")
 
         for remote_resource_tag in remote_resource_tags:
-            print(remote_resource_tag)
+            print(remote_resource_tag['tag'])
 
             if args.generate:
                 generated_resource_tags.append(generate_sha(remote_resource_tag))
