@@ -64,7 +64,6 @@ if len(resource_tags) > 0:
     else:
         print("[*] No resource tags found without integrity attribute")
 
-
     if len(generated_resource_tags) > 0:
         print("\n[*] Generated SRIs:\n")
         for generated_resource_tag in generated_resource_tags:
