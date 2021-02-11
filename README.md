@@ -40,9 +40,30 @@ Now you can run the script which in its most basic form takes one argument, the 
 $ ./sri-check https://kubernetes.io/
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
 <script async="" src="https://www.google-analytics.com/analytics.js"></script>
+<link href="https://kubernetes.io/zh/" hreflang="zh" rel="alternate"/>
+<link href="https://kubernetes.io/ko/" hreflang="ko" rel="alternate"/>
+<link href="https://kubernetes.io/ja/" hreflang="ja" rel="alternate"/>
+<link href="https://kubernetes.io/fr/" hreflang="fr" rel="alternate"/>
+<link href="https://kubernetes.io/it/" hreflang="it" rel="alternate"/>
+<link href="https://kubernetes.io/de/" hreflang="de" rel="alternate"/>
+<link href="https://kubernetes.io/es/" hreflang="es" rel="alternate"/>
+<link href="https://kubernetes.io/pt/" hreflang="pt" rel="alternate"/>
+<link href="https://kubernetes.io/id/" hreflang="id" rel="alternate"/>
+<link href="https://kubernetes.io/vi/" hreflang="vi" rel="alternate"/>
+<link href="https://kubernetes.io/ru/" hreflang="ru" rel="alternate"/>
+<link href="https://kubernetes.io/pl/" hreflang="pl" rel="alternate"/>
+<link href="https://kubernetes.io/uk/" hreflang="uk" rel="alternate"/>
+<link href="https://kubernetes.io/feed.xml" rel="alternate" type="application/rss+xml"/>
+<link href="https://cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css" rel="stylesheet" type="text/css"/>
 ```
 
 > Sidenote: Don't worry about tags which aren't versioned, like the analytics ones above. You will spin your wheels trying to track changes and update the SRI hash.
+
+If the page you are checking requires some kind of authorisation, you can specify HTTP request headers using the `--header` or `-H` flag.
+
+```bash
+$ ./sri-check -H "Authorization: Bearer mytoken" -H "More: Headers" https://kubernetes.io/
+```
 
 ### Generate
 
