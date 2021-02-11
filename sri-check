@@ -4,12 +4,14 @@ import argparse
 import base64
 import hashlib
 import requests
+import sys
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-g", "--generate", help="Generate sha384 hashes for resources", action="store_true")
 parser.add_argument("-a", "--all", help="Output detected script/link tags regardless of SRI status", action="store_true")
+parser.add_argument("-H", "--header", help="HTTP header value to send with the request. Specify multiple times if needed", action="append")
 parser.add_argument("url", help="Target URL to check for SRI")
 args = parser.parse_args()
 
@@ -22,7 +24,13 @@ def generate_sha(remote_resource_tag):
 
     return tag
 
-html = requests.get(args.url).content
+headers = {}
+if args.header:
+    for header in args.header:
+        k, v = header.split(": ")
+        headers[k] = v
+
+html = requests.get(args.url, headers=headers).content
 soup = BeautifulSoup(html, features='html.parser')
 
 resource_tags = []
