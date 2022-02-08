@@ -3,6 +3,7 @@
 import argparse
 import base64
 import hashlib
+import re
 import requests
 import sys
 from bs4 import BeautifulSoup
@@ -47,6 +48,7 @@ else:
     resource_tags.extend(link_tags)
 
 if len(resource_tags) > 0:
+    parsed_source_url = urlparse(args.url)
     remote_resource_tags = []
     generated_resource_tags = []
 
@@ -55,6 +57,9 @@ if len(resource_tags) > 0:
         for potential_attribute in ['src', 'href']:
             if potential_attribute in resource_tag.attrs:
                 attribute = potential_attribute
+
+        if re.search('^//', resource_tag[attribute]):
+            resource_tag[attribute] = parsed_source_url.scheme + ':' + resource_tag[attribute]
 
         parsed_tag = urlparse(resource_tag[attribute])
         if parsed_tag.scheme in {'http', 'https'}:
