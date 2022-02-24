@@ -5,7 +5,6 @@ import base64
 import hashlib
 import re
 import requests
-import sys
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
@@ -15,6 +14,20 @@ parser.add_argument("-a", "--all", help="Output detected script/link tags regard
 parser.add_argument("-H", "--header", help="HTTP header value to send with the request. Specify multiple times if needed", action="append")
 parser.add_argument("url", help="Target URL to check for SRI")
 args = parser.parse_args()
+
+# hosts we will ignore (in netloc format), in addition to the target URL
+whitelisted_hosts = [
+    "fonts.googleapis.com", # does not use versioning so can't realistically use SRI
+    urlparse(args.url).netloc
+]
+
+def is_whitelisted(netloc):
+    try:
+        whitelisted_hosts.index(netloc)
+    except ValueError:
+        return False
+    else:
+        return True
 
 def generate_sha(remote_resource_tag):
     tag = remote_resource_tag['tag']
@@ -63,7 +76,8 @@ if len(resource_tags) > 0:
 
         parsed_tag = urlparse(resource_tag[attribute])
         if parsed_tag.scheme in {'http', 'https'}:
-            remote_resource_tags.append({'tag': resource_tag, 'attr': attribute})
+            if is_whitelisted(parsed_tag.netloc) is False:
+                remote_resource_tags.append({'tag': resource_tag, 'attr': attribute})
 
     if len(remote_resource_tags) > 0:
         if args.generate:
