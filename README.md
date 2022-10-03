@@ -68,6 +68,8 @@ If the page you are checking requires some kind of authorisation, you can specif
 $ ./sri-check -H "Authorization: Bearer mytoken" -H "More: Headers" https://kubernetes.io/
 ```
 
+In case you are working with SPA application, you can use headless browser to render page before running check by setting `--browser` or `-b` flag.
+
 ### Generate
 
 Optionally you may wish to output updated script tags with the SRI hash calculated. You can do this by specifying the `--generate` flag.
