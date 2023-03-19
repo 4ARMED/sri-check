@@ -47,9 +47,6 @@ if args.header:
 
 if args.browser:
     from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.chrome.options import Options
 
     chrome_options = Options()
@@ -73,6 +70,7 @@ if args.browser:
     html = browser.page_source
 else:
     html = requests.get(args.url, headers=headers).content
+    
 soup = BeautifulSoup(html, features='html.parser')
 
 resource_tags = []
