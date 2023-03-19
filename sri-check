@@ -48,6 +48,8 @@ html = requests.get(args.url, headers=headers).content
 soup = BeautifulSoup(html, features='html.parser')
 
 resource_tags = []
+remote_resource_tags = []
+generated_resource_tags = []
 
 if args.all:
     script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True})]
@@ -62,8 +64,6 @@ else:
 
 if len(resource_tags) > 0:
     parsed_source_url = urlparse(args.url)
-    remote_resource_tags = []
-    generated_resource_tags = []
 
     for resource_tag in resource_tags:
         attribute = ""
@@ -79,19 +79,11 @@ if len(resource_tags) > 0:
             if is_whitelisted(parsed_tag.netloc) is False:
                 remote_resource_tags.append({'tag': resource_tag, 'attr': attribute})
 
-    if len(remote_resource_tags) > 0:
+if len(remote_resource_tags) > 0:
+    for remote_resource_tag in remote_resource_tags:
         if args.generate:
-            print("[*] Resource tags without SRI:\n")
-
-        for remote_resource_tag in remote_resource_tags:
+            print(generate_sha(remote_resource_tag))
+        else:
             print(remote_resource_tag['tag'])
-
-            if args.generate:
-                generated_resource_tags.append(generate_sha(remote_resource_tag))
-    else:
-        print("[*] No resource tags found without integrity attribute")
-
-    if len(generated_resource_tags) > 0:
-        print("\n[*] Generated SRIs:\n")
-        for generated_resource_tag in generated_resource_tags:
-            print(generated_resource_tag)
+else:
+    print("[*] No resource tags found without integrity attribute")
