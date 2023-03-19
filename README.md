@@ -4,6 +4,9 @@ Ridiculously simple Python script for grabbing `<script>` tags from a remote URL
 
 We use it for <a href="https://www.4armed.com/assess/penetration-testing/">application security reviews</a> but you can use it for whatever you like!
 
+## Docker
+The easiest way to run the application is to build docker image provided in the repository `docker build -t sri-check .` and then run it as `docker run --rm sri-check --help`. See [Usage](#usage) section for more details.
+
 ## Install
 
 You need a few libraries. There's a `requirements.txt` file in this repo for use with pip. We recommend using a venv to isolate these dependencies.
@@ -64,6 +67,8 @@ If the page you are checking requires some kind of authorisation, you can specif
 ```bash
 $ ./sri-check -H "Authorization: Bearer mytoken" -H "More: Headers" https://kubernetes.io/
 ```
+
+In case you are working with SPA application, you can use headless browser to render page before running check by setting `--browser` or `-b` flag.
 
 ### Generate
 

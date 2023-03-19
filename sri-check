@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-g", "--generate", help="Generate sha384 hashes for resources", action="store_true")
 parser.add_argument("-a", "--all", help="Output detected script/link tags regardless of SRI status", action="store_true")
+parser.add_argument("-b", "--browser", help="Use headless browser to retrieve page and run client side rendering", action="store_true")
 parser.add_argument("-H", "--header", help="HTTP header value to send with the request. Specify multiple times if needed", action="append")
 parser.add_argument("url", help="Target URL to check for SRI")
 args = parser.parse_args()
@@ -44,7 +45,34 @@ if args.header:
         k, v = header.split(": ")
         headers[k] = v
 
-html = requests.get(args.url, headers=headers).content
+if args.browser:
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.chrome.options import Options
+
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.experimental_options["prefs"] = {
+        "profile.default_content_settings": {
+            "images": 2
+        }
+    }
+
+    browser = webdriver.Chrome("chromedriver", options=chrome_options)
+
+    def interceptor(request):
+        request.headers.update(headers)
+
+    browser.request_interceptor = interceptor
+
+    browser.get(args.url)
+    html = browser.page_source
+else:
+    html = requests.get(args.url, headers=headers).content
 soup = BeautifulSoup(html, features='html.parser')
 
 resource_tags = []
