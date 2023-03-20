@@ -7,6 +7,9 @@ def open_local(paths, mode="r", encoding="utf8"):
 with open_local(["sricheck", "__init__.py"]) as f:
     version = re.search(r"__version__ = [\"'](\d+\.\d+\.\d+)[\"']", f.read()).group(1)
 
+with open_local(["README.md"]) as f:
+    long_description = f.read()
+
 install_requires = [
     "beautifulsoup4>=4.0",
     "requests>=2.0",
@@ -17,6 +20,8 @@ setuptools.setup(
     name="sri-check",
     author="Marc Wickenden",
     author_email="code@4armed.com",
+    description="Subresource Integrity Checker",
+    long_description=long_description,
     url="https://github.com/4armed/sri-check",
     version=version,
     packages=setuptools.find_packages(),

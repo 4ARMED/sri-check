@@ -9,7 +9,13 @@ The easiest way to run the application is to build docker image provided in the 
 
 ## Install
 
-You need a few libraries. There's a `requirements.txt` file in this repo for use with pip. We recommend using a venv to isolate these dependencies.
+The easiest way is to install it from PyPi using:
+
+```bash
+pip install sri-check
+```
+
+If you want to install from source then clone this repo, then you need a few libraries. There's a `requirements.txt` file in this repo for use with pip. We recommend using a venv to isolate these dependencies.
 
 If you use the `Makefile` it will set one up for you.
 
@@ -40,7 +46,7 @@ $ pip install -r requirements.txt
 Now you can run the script which in its most basic form takes one argument, the URL you wish to check.
 
 ```bash
-$ ./sri-check https://kubernetes.io/
+$ ./sricheck/sricheck.py https://kubernetes.io/
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
 <script async="" src="https://www.google-analytics.com/analytics.js"></script>
 <link href="https://kubernetes.io/zh/" hreflang="zh" rel="alternate"/>
@@ -72,17 +78,10 @@ In case you are working with SPA application, you can use headless browser to re
 
 ### Generate
 
-Optionally you may wish to output updated script tags with the SRI hash calculated. You can do this by specifying the `--generate` flag.
+You can alternatively output updated script tags with the SRI hash calculated. You can do this by specifying the `--generate` flag.
 
 ```bash
 $ ./sri-check --generate https://kubernetes.io/
-[*] Script tags without SRI:
-
-<script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
-<script async="" src="https://www.google-analytics.com/analytics.js"></script>
-
-[*] Generated SRIs:
-
 <script async="" crossorigin="anonymous" integrity="sha384-ITXXO4YR2TnoUD5vtyrbRhklkt/Q9hFZILlBvnQfLCe4dFJzAofF5sflCksWtNRa" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
 <script async="" crossorigin="anonymous" integrity="sha384-+Mufq/JopHTZLYFkTpT8TA9y0zY/A/VflmpyMsbjcGbcyUbfudhn5Et/w6EIFhoo" src="https://www.google-analytics.com/analytics.js"></script>
 ```
