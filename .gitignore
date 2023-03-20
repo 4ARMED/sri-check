@@ -1,2 +1,4 @@
 venv
 .dccache
+sri_check.egg-info/**
+build/**
