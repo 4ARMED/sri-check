@@ -9,7 +9,7 @@ with open_local(["sricheck", "__init__.py"]) as f:
 
 install_requires = [
     "beautifulsoup4>=4.0",
-    "requests>=2.0"
+    "requests>=2.0",
     "selenium>=4.8"
 ]
 
