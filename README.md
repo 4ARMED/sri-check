@@ -15,6 +15,8 @@ The easiest way is to install it from PyPi using:
 pip install sri-check
 ```
 
+Then you should have `sri-check` in your PATH.
+
 If you want to install from source then clone this repo, then you need a few libraries. There's a `requirements.txt` file in this repo for use with pip. We recommend using a venv to isolate these dependencies.
 
 If you use the `Makefile` it will set one up for you.
@@ -45,8 +47,10 @@ $ pip install -r requirements.txt
 
 Now you can run the script which in its most basic form takes one argument, the URL you wish to check.
 
+In the following examples I will assume you have installed via PyPi and have the script in your PATH. If not, use `./sricheck/sricheck.py` instead of `sri-check`.
+
 ```bash
-$ ./sricheck/sricheck.py https://kubernetes.io/
+$ sri-check https://kubernetes.io/
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
 <script async="" src="https://www.google-analytics.com/analytics.js"></script>
 <link href="https://kubernetes.io/zh/" hreflang="zh" rel="alternate"/>
@@ -71,7 +75,7 @@ $ ./sricheck/sricheck.py https://kubernetes.io/
 If the page you are checking requires some kind of authorisation, you can specify HTTP request headers using the `--header` or `-H` flag.
 
 ```bash
-$ ./sri-check -H "Authorization: Bearer mytoken" -H "More: Headers" https://kubernetes.io/
+$ sri-check -H "Authorization: Bearer mytoken" -H "More: Headers" https://kubernetes.io/
 ```
 
 In case you are working with SPA application, you can use headless browser to render page before running check by setting `--browser` or `-b` flag.
@@ -81,7 +85,7 @@ In case you are working with SPA application, you can use headless browser to re
 You can alternatively output updated script tags with the SRI hash calculated. You can do this by specifying the `--generate` flag.
 
 ```bash
-$ ./sri-check --generate https://kubernetes.io/
+$ sri-check --generate https://kubernetes.io/
 <script async="" crossorigin="anonymous" integrity="sha384-ITXXO4YR2TnoUD5vtyrbRhklkt/Q9hFZILlBvnQfLCe4dFJzAofF5sflCksWtNRa" src="https://www.googletagmanager.com/gtag/js?id=UA-36037335-10"></script>
 <script async="" crossorigin="anonymous" integrity="sha384-+Mufq/JopHTZLYFkTpT8TA9y0zY/A/VflmpyMsbjcGbcyUbfudhn5Et/w6EIFhoo" src="https://www.google-analytics.com/analytics.js"></script>
 ```
