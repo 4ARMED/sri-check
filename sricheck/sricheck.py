@@ -57,7 +57,7 @@ def get_html(url="", browser=False, headers={}):
 
 def get_remote_resource_tags(url="", browser=False, headers={}, all=False):
     html = get_html(url=url, browser=browser, headers=headers)
-    soup = BeautifulSoup(html, features='html.parser')
+    soup = BeautifulSoup(html, 'lxml')
 
     resource_tags = []
     remote_resource_tags = []
