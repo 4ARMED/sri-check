@@ -12,6 +12,7 @@ with open_local(["README.md"]) as f:
 
 install_requires = [
     "beautifulsoup4>=4.0",
+    "lxml>=4.8",
     "requests>=2.0",
     "selenium>=4.8"
 ]
