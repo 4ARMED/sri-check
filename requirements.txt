@@ -1,4 +1,4 @@
 beautifulsoup4>=4.0
 lxml>=4.8
 requests>=2.0
-selenium>=4.4
+selenium>=4.8
