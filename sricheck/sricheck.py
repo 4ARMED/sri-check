@@ -52,6 +52,7 @@ def get_html(url="", browser=False, headers={}):
         browser.get(url)
         return browser.page_source
     else:
+        # file deepcode ignore Ssrf: The purpose of the script is to parse remote URLs from the CLI
         return requests.get(url, headers=headers).content
 
 
@@ -98,6 +99,7 @@ def cli():
     parser.add_argument("-a", "--all", help="Output detected script/link tags regardless of SRI status", action="store_true")
     parser.add_argument("-b", "--browser", help="Use headless browser to retrieve page and run client side rendering", action="store_true")
     parser.add_argument("-H", "--header", help="HTTP header value to send with the request. Specify multiple times if needed", action="append")
+    parser.add_argument("-i", "--ignore", help="Ignore a host (in netloc format - e.g. www.4armed.com) when checking for SRI. Specify multiple times if needed", action="append")
     parser.add_argument("url", help="Target URL to check for SRI")
     args = parser.parse_args()
 
@@ -108,10 +110,16 @@ def cli():
             headers[k] = v
 
     # hosts we will ignore (in netloc format), in addition to the target URL
+    global whitelisted_hosts
     whitelisted_hosts = [
         "fonts.googleapis.com", # does not use versioning so can't realistically use SRI
+        "js.hs-scripts.com", # does not use versioning so can't realistically use SRI
         urlparse(args.url).netloc
     ]
+
+    if args.ignore:
+        for host in args.ignore:
+            whitelisted_hosts.append(host)
 
     remote_resource_tags = get_remote_resource_tags(url=args.url, browser=args.browser, headers=headers, all=args.all)
 
