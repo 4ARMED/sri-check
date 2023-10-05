@@ -4,3 +4,11 @@ README.md
 .dockerignore
 .git
 .gitignore
+venv
+.dccache
+sri_check.egg-info/**
+build/**
+dist/**
+.vscode/**
+**/__pycache__/**
+.tox/**

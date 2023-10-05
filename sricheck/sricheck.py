@@ -8,6 +8,7 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from importlib import metadata
 
 def generate_sha(remote_resource_tag):
     tag = remote_resource_tag['tag']
@@ -145,6 +146,7 @@ def cli():
     parser.add_argument("-i", "--ignore", help="host to ignore when checking for SRI. e.g. cdn.4armed.com. Specify multiple times if needed", action="append")
     parser.add_argument("-I", "--ignore-regex", help="regex host to ignore when checking for SRI. e.g. .*\.4armed\.com. Specify multiple times if needed", action="append")
     parser.add_argument("-q", "--quiet", help="Suppress output if all tags have SRI", action="store_true")
+    parser.add_argument("--version", action="version", version=metadata.version("sri-check"))
     parser.add_argument("url", help="Target URL to check for SRI")
     args = parser.parse_args()
 
