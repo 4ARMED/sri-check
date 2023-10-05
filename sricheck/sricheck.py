@@ -66,7 +66,7 @@ class SRICheck:
     def is_allowlisted(self, netloc):
         # Don't check allowlist if skip_checks is True
         if self.skip_checks is True:
-            return True
+            return False
         
         for pattern in self.allowlisted_hosts:
             # file deepcode ignore reDOS: Intended functionality
