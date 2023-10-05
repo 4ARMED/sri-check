@@ -4,19 +4,10 @@ import argparse
 import base64
 import hashlib
 import re
+import sys
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
-
-whitelisted_hosts = []
-
-def is_whitelisted(netloc):
-    try:
-        whitelisted_hosts.index(netloc)
-    except ValueError:
-        return False
-    else:
-        return True
 
 def generate_sha(remote_resource_tag):
     tag = remote_resource_tag['tag']
@@ -27,71 +18,123 @@ def generate_sha(remote_resource_tag):
 
     return tag
 
-def get_html(url="", browser=False, headers={}):
-    if browser:
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
+class SRICheck:
+    def __init__(self, url):
 
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.experimental_options["prefs"] = {
-            "profile.default_content_settings": {
-                "images": 2
+        if url == "":
+            raise ValueError("URL cannot be empty")
+        else:
+            parsed_url = urlparse(url)
+            if parsed_url.scheme not in {'http', 'https'}:
+                raise ValueError("URL must be http or https")
+            elif parsed_url.netloc == "":
+                raise ValueError("URL must include a hostname")
+        
+        self.url = url
+        self.browser = False
+        self.headers = {}
+        self.skip_checks = False
+
+        # hosts we will ignore (in netloc format), in addition to the target URL
+        self.whitelisted_hosts = [
+            "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
+            "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
+            re.escape(urlparse(self.url).netloc)
+        ]
+    
+    def set_browser(self, browser):
+        self.browser = browser
+    
+    def set_headers(self, headers):
+        self.headers = headers
+    
+    def add_whitelisted_host(self, pattern):
+        self.whitelisted_hosts.append(pattern)
+    
+    def whitelisted_hosts(self):
+        return self.whitelisted_hosts
+    
+    def set_skip_checks(self, skip_checks):
+        self.skip_checks = skip_checks
+
+    def is_whitelisted(self, netloc):
+        for pattern in self.whitelisted_hosts:
+            # file deepcode ignore reDOS: Intended functionality
+            if re.search(pattern, netloc):
+                return True
+            
+        return False
+
+    def get_html(self):
+        if self.browser:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.experimental_options["prefs"] = {
+                "profile.default_content_settings": {
+                    "images": 2
+                }
             }
-        }
 
-        browser = webdriver.Chrome("chromedriver", options=chrome_options)
+            browser = webdriver.Chrome("chromedriver", options=chrome_options)
 
-        def interceptor(request):
-            request.headers.update(headers)
+            def interceptor(request):
+                request.headers.update(self.headers)
 
-        browser.request_interceptor = interceptor
+            browser.request_interceptor = interceptor
 
-        browser.get(url)
-        return browser.page_source
-    else:
-        # file deepcode ignore Ssrf: The purpose of the script is to parse remote URLs from the CLI
-        return requests.get(url, headers=headers).content
+            browser.get(self.url)
+            return browser.page_source
+        else:
+            # file deepcode ignore Ssrf: The purpose of the script is to parse remote URLs from the CLI
+            return requests.get(self.url, headers=self.headers).content
 
 
-def get_remote_resource_tags(url="", browser=False, headers={}, all=False):
-    html = get_html(url=url, browser=browser, headers=headers)
-    soup = BeautifulSoup(html, 'lxml')
+    def get_remote_resource_tags(self, html):
+        soup = BeautifulSoup(html, 'lxml')
 
-    resource_tags = []
-    remote_resource_tags = []
+        resource_tags = []
+        remote_resource_tags = []
 
-    if all:
-        script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True})]
-        link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True})]
-        resource_tags.extend(script_tags)
-        resource_tags.extend(link_tags)
-    else:
-        script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True, 'integrity':None})]
-        link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True, 'integrity':None})]
-        resource_tags.extend(script_tags)
-        resource_tags.extend(link_tags)
+        if self.skip_checks is True:
+            script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True})]
+            link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True})]
+            resource_tags.extend(script_tags)
+            resource_tags.extend(link_tags)
+        else:
+            script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True, 'integrity':None})]
+            link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True, 'integrity':None})]
+            resource_tags.extend(script_tags)
+            resource_tags.extend(link_tags)
 
-    if len(resource_tags) > 0:
-        parsed_source_url = urlparse(url)
+        if len(resource_tags) > 0:
+            parsed_source_url = urlparse(self.url)
 
-        for resource_tag in resource_tags:
-            attribute = ""
-            for potential_attribute in ['src', 'href']:
-                if potential_attribute in resource_tag.attrs:
-                    attribute = potential_attribute
+            for resource_tag in resource_tags:
+                attribute = ""
+                for potential_attribute in ['src', 'href']:
+                    if potential_attribute in resource_tag.attrs:
+                        attribute = potential_attribute
 
-            if re.search('^//', resource_tag[attribute]):
-                resource_tag[attribute] = parsed_source_url.scheme + ':' + resource_tag[attribute]
+                if re.search('^//', resource_tag[attribute]):
+                    resource_tag[attribute] = parsed_source_url.scheme + ':' + resource_tag[attribute]
 
-            parsed_tag = urlparse(resource_tag[attribute])
-            if parsed_tag.scheme in {'http', 'https'}:
-                if is_whitelisted(parsed_tag.netloc) is False:
-                    remote_resource_tags.append({'tag': resource_tag, 'attr': attribute})
+                parsed_tag = urlparse(resource_tag[attribute])
+                if parsed_tag.scheme in {'http', 'https'}:
+                    if self.is_whitelisted(parsed_tag.netloc) is False:
+                        remote_resource_tags.append({'tag': resource_tag, 'attr': attribute})
 
-    return remote_resource_tags
+        return remote_resource_tags
+
+    def run(self):
+        html = self.get_html()
+        remote_resource_tags = self.get_remote_resource_tags(html)
+
+        return remote_resource_tags
 
 def cli():
     parser = argparse.ArgumentParser()
@@ -99,9 +142,17 @@ def cli():
     parser.add_argument("-a", "--all", help="Output detected script/link tags regardless of SRI status", action="store_true")
     parser.add_argument("-b", "--browser", help="Use headless browser to retrieve page and run client side rendering", action="store_true")
     parser.add_argument("-H", "--header", help="HTTP header value to send with the request. Specify multiple times if needed", action="append")
-    parser.add_argument("-i", "--ignore", help="Ignore a host (in netloc format - e.g. www.4armed.com) when checking for SRI. Specify multiple times if needed", action="append")
+    parser.add_argument("-i", "--ignore", help="host to ignore when checking for SRI. e.g. cdn.4armed.com. Specify multiple times if needed", action="append")
+    parser.add_argument("-I", "--ignore-regex", help="regex host to ignore when checking for SRI. e.g. .*\.4armed\.com. Specify multiple times if needed", action="append")
+    parser.add_argument("-q", "--quiet", help="Suppress output if all tags have SRI", action="store_true")
     parser.add_argument("url", help="Target URL to check for SRI")
     args = parser.parse_args()
+
+    try:
+        s = SRICheck(url=args.url)
+    except ValueError as error:
+        print(f"[-] {error}")
+        sys.exit(1)
 
     headers = {}
     if args.header:
@@ -109,19 +160,21 @@ def cli():
             k, v = header.split(": ")
             headers[k] = v
 
-    # hosts we will ignore (in netloc format), in addition to the target URL
-    global whitelisted_hosts
-    whitelisted_hosts = [
-        "fonts.googleapis.com", # does not use versioning so can't realistically use SRI
-        "js.hs-scripts.com", # does not use versioning so can't realistically use SRI
-        urlparse(args.url).netloc
-    ]
+    if len(headers) > 0:
+        s.set_headers(headers)
+    
+    s.set_browser(args.browser)
 
     if args.ignore:
         for host in args.ignore:
-            whitelisted_hosts.append(host)
+            s.add_whitelisted_host(re.escape(host))
 
-    remote_resource_tags = get_remote_resource_tags(url=args.url, browser=args.browser, headers=headers, all=args.all)
+    if args.ignore_regex:
+        for pattern in args.ignore_regex:
+            s.add_whitelisted_host(pattern)  
+
+    s.set_skip_checks(args.all)
+    remote_resource_tags = s.run()
 
     if len(remote_resource_tags) > 0:
         for remote_resource_tag in remote_resource_tags:
@@ -130,7 +183,8 @@ def cli():
             else:
                 print(remote_resource_tag['tag'])
     else:
-        print("[*] No resource tags found without integrity attribute")
+        if args.quiet is False:
+            print("[*] No resource tags found without integrity attribute")
 
 if __name__== "__main__":
     cli()
