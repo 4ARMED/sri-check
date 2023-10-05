@@ -19,7 +19,7 @@ class Testallowlisting(unittest.TestCase):
     def test_google_fonts_is_not_allowlisted_when_skip_checks_is_true(self):
         check = SRICheck("https://www.4armed.com")
         check.set_skip_checks(True)
-        self.assertEqual(check.is_allowlisted("fonts.googleapis.com"), True)
+        self.assertEqual(check.is_allowlisted("fonts.googleapis.com"), False)
     
     def test_target_url_is_allowlisted(self):
         check = SRICheck("https://www.4armed.com")
