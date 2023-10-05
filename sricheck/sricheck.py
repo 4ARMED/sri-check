@@ -40,6 +40,7 @@ class SRICheck:
         self.whitelisted_hosts = [
             "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
             "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
+            "www\.googletagmanager\.com", # does not use versioning so can't realistically use SRI
             re.escape(urlparse(self.url).netloc)
         ]
     
@@ -59,6 +60,10 @@ class SRICheck:
         self.skip_checks = skip_checks
 
     def is_whitelisted(self, netloc):
+        # Don't check whitelist if skip_checks is True
+        if self.skip_checks is True:
+            return True
+        
         for pattern in self.whitelisted_hosts:
             # file deepcode ignore reDOS: Intended functionality
             if re.search(pattern, netloc):
