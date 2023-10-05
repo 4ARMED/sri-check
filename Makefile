@@ -6,7 +6,7 @@ setup:
 	@echo "Now run source venv/bin/activate"
 
 build:
-	@python3 -m build
+	@python -m build
 
 upload: build
-	@python3 -m twine upload --repository sri-check dist/*
+	@python -m twine upload --repository sri-check dist/*
