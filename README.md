@@ -14,10 +14,6 @@ pip install sri-check
 
 Then you should have `sri-check` in your PATH.
 
-If you want to install from source then clone this repo and install the required libraries. There's a `requirements.txt` file in this repo for use with pip. We recommend using a venv to isolate these dependencies.
-
-If you run `make` it will set one up for you.
-
 ## Usage
 
 ### Check
@@ -64,7 +60,7 @@ sri-check -i use.typekit.net -i cdn.jsdelivr.net https://www.4armed.com/
 [*] No resource tags found without integrity attribute
 ```
 
-In this case, there are no SRI concerns let to report so sri-check tells you. If you don't want output if there's nothing to worry about you can use the `-q` flag to tell sri-check to be quiet.
+In this case, there are no SRI concerns left to report so sri-check tells you. If you don't want output if there's nothing to worry about you can use the `-q` flag to tell sri-check to be quiet.
 
 ```bash
 sri-check -i use.typekit.net -i cdn.jsdelivr.net https://www.4armed.com/ -q
