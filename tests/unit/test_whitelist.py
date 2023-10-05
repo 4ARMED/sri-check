@@ -16,6 +16,11 @@ class TestWhitelisting(unittest.TestCase):
         check = SRICheck("https://www.4armed.com")
         self.assertEqual(check.is_whitelisted("js.hs-scripts.com"), True)
     
+    def test_google_fonts_is_not_whitelisted_when_skip_checks_is_true(self):
+        check = SRICheck("https://www.4armed.com")
+        check.set_skip_checks(True)
+        self.assertEqual(check.is_whitelisted("fonts.googleapis.com"), True)
+    
     def test_target_url_is_whitelisted(self):
         check = SRICheck("https://www.4armed.com")
         self.assertEqual(check.is_whitelisted("www.4armed.com"), True)

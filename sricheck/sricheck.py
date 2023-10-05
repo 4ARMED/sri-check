@@ -60,6 +60,10 @@ class SRICheck:
         self.skip_checks = skip_checks
 
     def is_whitelisted(self, netloc):
+        # Don't check whitelist if skip_checks is True
+        if self.skip_checks is True:
+            return True
+        
         for pattern in self.whitelisted_hosts:
             # file deepcode ignore reDOS: Intended functionality
             if re.search(pattern, netloc):
