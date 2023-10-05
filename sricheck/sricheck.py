@@ -35,9 +35,10 @@ class SRICheck:
         self.browser = False
         self.headers = {}
         self.skip_checks = False
+        self.stdin = False
 
         # hosts we will ignore (in netloc format), in addition to the target URL
-        self.whitelisted_hosts = [
+        self.allowlisted_hosts = [
             "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
             "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
             "www\.googletagmanager\.com", # does not use versioning so can't realistically use SRI
@@ -50,21 +51,24 @@ class SRICheck:
     def set_headers(self, headers):
         self.headers = headers
     
-    def add_whitelisted_host(self, pattern):
-        self.whitelisted_hosts.append(pattern)
+    def set_stdin(self, stdin):
+        self.stdin = stdin
     
-    def whitelisted_hosts(self):
-        return self.whitelisted_hosts
+    def add_allowlisted_host(self, pattern):
+        self.allowlisted_hosts.append(pattern)
+    
+    def allowlisted_hosts(self):
+        return self.allowlisted_hosts
     
     def set_skip_checks(self, skip_checks):
         self.skip_checks = skip_checks
 
-    def is_whitelisted(self, netloc):
-        # Don't check whitelist if skip_checks is True
+    def is_allowlisted(self, netloc):
+        # Don't check allowlist if skip_checks is True
         if self.skip_checks is True:
             return True
         
-        for pattern in self.whitelisted_hosts:
+        for pattern in self.allowlisted_hosts:
             # file deepcode ignore reDOS: Intended functionality
             if re.search(pattern, netloc):
                 return True
@@ -131,13 +135,17 @@ class SRICheck:
 
                 parsed_tag = urlparse(resource_tag[attribute])
                 if parsed_tag.scheme in {'http', 'https'}:
-                    if self.is_whitelisted(parsed_tag.netloc) is False:
+                    if self.is_allowlisted(parsed_tag.netloc) is False:
                         remote_resource_tags.append({'tag': resource_tag, 'attr': attribute})
 
         return remote_resource_tags
 
     def run(self):
-        html = self.get_html()
+        if self.stdin:
+            html = sys.stdin.read()
+        else:
+            html = self.get_html()
+
         remote_resource_tags = self.get_remote_resource_tags(html)
 
         return remote_resource_tags
@@ -151,6 +159,8 @@ def cli():
     parser.add_argument("-i", "--ignore", help="host to ignore when checking for SRI. e.g. cdn.4armed.com. Specify multiple times if needed", action="append")
     parser.add_argument("-I", "--ignore-regex", help="regex host to ignore when checking for SRI. e.g. .*\.4armed\.com. Specify multiple times if needed", action="append")
     parser.add_argument("-q", "--quiet", help="Suppress output if all tags have SRI", action="store_true")
+    parser.add_argument("-s", "--stdin", help="Read HTML from stdin instead of fetching the resource", action="store_true")
+    parser.add_argument("-z", "--zero-exit", help="Return zero exit code even if tags are found without SRI (default is exit 99)", action="store_true")
     parser.add_argument("--version", action="version", version=metadata.version("sri-check"))
     parser.add_argument("url", help="Target URL to check for SRI")
     args = parser.parse_args()
@@ -159,7 +169,7 @@ def cli():
         s = SRICheck(url=args.url)
     except ValueError as error:
         print(f"[-] {error}")
-        sys.exit(1)
+        return 1
 
     headers = {}
     if args.header:
@@ -170,15 +180,16 @@ def cli():
     if len(headers) > 0:
         s.set_headers(headers)
     
+    s.set_stdin(args.stdin)
     s.set_browser(args.browser)
 
     if args.ignore:
         for host in args.ignore:
-            s.add_whitelisted_host(re.escape(host))
+            s.add_allowlisted_host(re.escape(host))
 
     if args.ignore_regex:
         for pattern in args.ignore_regex:
-            s.add_whitelisted_host(pattern)  
+            s.add_allowlisted_host(pattern)  
 
     s.set_skip_checks(args.all)
     remote_resource_tags = s.run()
@@ -189,9 +200,14 @@ def cli():
                 print(generate_sha(remote_resource_tag))
             else:
                 print(remote_resource_tag['tag'])
+        
+        if args.zero_exit is False:
+            return 99
     else:
         if args.quiet is False:
             print("[*] No resource tags found without integrity attribute")
+        
+    return 0
 
 if __name__== "__main__":
-    cli()
+    sys.exit(cli())
