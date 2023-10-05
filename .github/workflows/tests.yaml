@@ -13,5 +13,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
           python-version: "3.x"
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install -r requirements.txt
     - name: Run unittests
       run: python3 -m unittest discover -s tests
