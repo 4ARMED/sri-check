@@ -4,6 +4,7 @@ import argparse
 import base64
 import hashlib
 import re
+import sys
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
@@ -18,21 +19,51 @@ def generate_sha(remote_resource_tag):
     return tag
 
 class SRICheck:
-    def __init__(self, url, browser=False, headers={}, whitelisted_hosts = [], all=False):
+    def __init__(self, url):
+
+        if url == "":
+            raise ValueError("URL cannot be empty")
+        else:
+            parsed_url = urlparse(url)
+            if parsed_url.scheme not in {'http', 'https'}:
+                raise ValueError("URL must be http or https")
+            elif parsed_url.netloc == "":
+                raise ValueError("URL must include a hostname")
+        
         self.url = url
+        self.browser = False
+        self.headers = {}
+        self.skip_checks = False
+
+        # hosts we will ignore (in netloc format), in addition to the target URL
+        self.whitelisted_hosts = [
+            "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
+            "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
+            re.escape(urlparse(self.url).netloc)
+        ]
+    
+    def set_browser(self, browser):
         self.browser = browser
+    
+    def set_headers(self, headers):
         self.headers = headers
-        self.whitelisted_hosts = whitelisted_hosts
-        self.all = all
+    
+    def add_whitelisted_host(self, pattern):
+        self.whitelisted_hosts.append(pattern)
+    
+    def whitelisted_hosts(self):
+        return self.whitelisted_hosts
+    
+    def set_skip_checks(self, skip_checks):
+        self.skip_checks = skip_checks
 
     def is_whitelisted(self, netloc):
-        try:
-            self.whitelisted_hosts.index(netloc)
-        except ValueError:
-            return False
-        else:
-            return True
-
+        for pattern in self.whitelisted_hosts:
+            # file deepcode ignore reDOS: Intended functionality
+            if re.search(pattern, netloc):
+                return True
+            
+        return False
 
     def get_html(self):
         if self.browser:
@@ -69,7 +100,7 @@ class SRICheck:
         resource_tags = []
         remote_resource_tags = []
 
-        if self.all:
+        if self.skip_checks is True:
             script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True})]
             link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True})]
             resource_tags.extend(script_tags)
@@ -111,9 +142,17 @@ def cli():
     parser.add_argument("-a", "--all", help="Output detected script/link tags regardless of SRI status", action="store_true")
     parser.add_argument("-b", "--browser", help="Use headless browser to retrieve page and run client side rendering", action="store_true")
     parser.add_argument("-H", "--header", help="HTTP header value to send with the request. Specify multiple times if needed", action="append")
-    parser.add_argument("-i", "--ignore", help="Ignore a host (in netloc format - e.g. www.4armed.com) when checking for SRI. Specify multiple times if needed", action="append")
+    parser.add_argument("-i", "--ignore", help="host to ignore when checking for SRI. e.g. cdn.4armed.com. Specify multiple times if needed", action="append")
+    parser.add_argument("-I", "--ignore-regex", help="regex host to ignore when checking for SRI. e.g. .*\.4armed\.com. Specify multiple times if needed", action="append")
+    parser.add_argument("-q", "--quiet", help="Suppress output if all tags have SRI", action="store_true")
     parser.add_argument("url", help="Target URL to check for SRI")
     args = parser.parse_args()
+
+    try:
+        s = SRICheck(url=args.url)
+    except ValueError as error:
+        print(f"[-] {error}")
+        sys.exit(1)
 
     headers = {}
     if args.header:
@@ -121,18 +160,20 @@ def cli():
             k, v = header.split(": ")
             headers[k] = v
 
-    # hosts we will ignore (in netloc format), in addition to the target URL
-    whitelisted_hosts = [
-        "fonts.googleapis.com", # does not use versioning so can't realistically use SRI
-        "js.hs-scripts.com", # does not use versioning so can't realistically use SRI
-        urlparse(args.url).netloc
-    ]
+    if len(headers) > 0:
+        s.set_headers(headers)
+    
+    s.set_browser(args.browser)
 
     if args.ignore:
         for host in args.ignore:
-            whitelisted_hosts.append(host)
+            s.add_whitelisted_host(re.escape(host))
 
-    s = SRICheck(url=args.url, browser=args.browser, headers=headers, whitelisted_hosts=whitelisted_hosts, all=args.all)
+    if args.ignore_regex:
+        for pattern in args.ignore_regex:
+            s.add_whitelisted_host(pattern)  
+
+    s.set_skip_checks(args.all)
     remote_resource_tags = s.run()
 
     if len(remote_resource_tags) > 0:
@@ -142,7 +183,8 @@ def cli():
             else:
                 print(remote_resource_tag['tag'])
     else:
-        print("[*] No resource tags found without integrity attribute")
+        if args.quiet is False:
+            print("[*] No resource tags found without integrity attribute")
 
 if __name__== "__main__":
     cli()

@@ -23,10 +23,12 @@ setuptools.setup(
     author_email="code@4armed.com",
     description="Subresource Integrity Checker",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/4armed/sri-check",
     version=version,
     packages=setuptools.find_packages(),
     install_requires=install_requires,
     python_requires=">=3.6",
-    entry_points={"console_scripts": ["sri-check=sricheck.sricheck:cli"]}
+    entry_points={"console_scripts": ["sri-check=sricheck.sricheck:cli"]},
+    test_suite="tests"
 )
