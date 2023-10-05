@@ -40,6 +40,7 @@ class SRICheck:
         self.whitelisted_hosts = [
             "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
             "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
+            "www\.googletagmanager\.com", # does not use versioning so can't realistically use SRI
             re.escape(urlparse(self.url).netloc)
         ]
     

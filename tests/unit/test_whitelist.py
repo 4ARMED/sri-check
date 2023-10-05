@@ -8,6 +8,14 @@ class TestWhitelisting(unittest.TestCase):
         check = SRICheck("https://www.4armed.com")
         self.assertEqual(check.is_whitelisted("fonts.googleapis.com"), True)
     
+    def test_google_tag_manager_is_whitelisted(self):
+        check = SRICheck("https://www.4armed.com")
+        self.assertEqual(check.is_whitelisted("www.googletagmanager.com"), True)
+    
+    def test_hubspot_is_whitelisted(self):
+        check = SRICheck("https://www.4armed.com")
+        self.assertEqual(check.is_whitelisted("js.hs-scripts.com"), True)
+    
     def test_target_url_is_whitelisted(self):
         check = SRICheck("https://www.4armed.com")
         self.assertEqual(check.is_whitelisted("www.4armed.com"), True)
