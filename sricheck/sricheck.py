@@ -21,8 +21,14 @@ def generate_sha(remote_resource_tag):
 
 class SRICheck:
     def __init__(self, url):
+        self.browser = False
+        self.headers = {}
+        self.skip_checks = False
+        self.stdin = False
 
-        if url == "":
+        if url == "-":
+            self.stdin = True
+        elif url == "":
             raise ValueError("URL cannot be empty")
         else:
             parsed_url = urlparse(url)
@@ -32,18 +38,16 @@ class SRICheck:
                 raise ValueError("URL must include a hostname")
         
         self.url = url
-        self.browser = False
-        self.headers = {}
-        self.skip_checks = False
-        self.stdin = False
 
         # hosts we will ignore (in netloc format), in addition to the target URL
         self.allowlisted_hosts = [
             "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
             "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
             "www\.googletagmanager\.com", # does not use versioning so can't realistically use SRI
-            re.escape(urlparse(self.url).netloc)
-        ]
+        ]           
+
+        if self.stdin is False:
+            self.allowlisted_hosts.append(re.escape(urlparse(self.url).netloc))
     
     def set_browser(self, browser):
         self.browser = browser
@@ -159,10 +163,9 @@ def cli():
     parser.add_argument("-i", "--ignore", help="host to ignore when checking for SRI. e.g. cdn.4armed.com. Specify multiple times if needed", action="append")
     parser.add_argument("-I", "--ignore-regex", help="regex host to ignore when checking for SRI. e.g. .*\.4armed\.com. Specify multiple times if needed", action="append")
     parser.add_argument("-q", "--quiet", help="Suppress output if all tags have SRI", action="store_true")
-    parser.add_argument("-s", "--stdin", help="Read HTML from stdin instead of fetching the resource", action="store_true")
     parser.add_argument("-z", "--zero-exit", help="Return zero exit code even if tags are found without SRI (default is exit 99)", action="store_true")
     parser.add_argument("--version", action="version", version=metadata.version("sri-check"))
-    parser.add_argument("url", help="Target URL to check for SRI")
+    parser.add_argument("url", help="Target URL to check for SRI (use - to read from stdin)")
     args = parser.parse_args()
 
     try:
@@ -179,8 +182,7 @@ def cli():
 
     if len(headers) > 0:
         s.set_headers(headers)
-    
-    s.set_stdin(args.stdin)
+
     s.set_browser(args.browser)
 
     if args.ignore:

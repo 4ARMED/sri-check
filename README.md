@@ -157,10 +157,10 @@ sri-check -i use.typekit.net https://www.4armed.com/ -g
 
 ### STDIN
 
-sri-check also supports reading input from STDIN, like all good CLI tools. :-) Use the `-s` or `--stdin` flag to do this. Note that you still need to specify a URL otherwise sri-check doesn't know what site you are auditing and can't add it to the allowlist. It means you could pipe the output of curl through it, for example. 
+sri-check also supports reading input from STDIN, like all good CLI tools. :-) Simply specify the target URL as `-` to do this. It means you could pipe the output of curl through it, for example. 
 
 ```bash
-curl -s https://www.4armed.com/ | sri-check -s https://www.4armed.com/
+curl -s https://www.4armed.com/ | sri-check -
 <script src="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.js"></script>
 <link href="https://use.typekit.net/vlp2azz.css" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.css" rel="stylesheet"/>
@@ -169,7 +169,7 @@ curl -s https://www.4armed.com/ | sri-check -s https://www.4armed.com/
 Or you might have some HTML you've saved from somewhere into a file.
 
 ```bash
-cat /tmp/4armed.html | sri-check -s https://www.4armed.com
+cat /tmp/4armed.html | sri-check -
 <script src="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.js"></script>
 <link href="https://use.typekit.net/vlp2azz.css" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.css" rel="stylesheet"/>
