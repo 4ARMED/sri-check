@@ -43,7 +43,7 @@ class SRICheck:
         self.allowlisted_hosts = [
             "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
             "fonts\.gstatic\.com", # does not use versioning so can't realistically use SRI
-            "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
+            "js-?[a-z0-9]*\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
             "www\.googletagmanager\.com", # does not use versioning so can't realistically use SRI
         ]           
 
