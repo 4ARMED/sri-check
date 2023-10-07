@@ -42,6 +42,7 @@ class SRICheck:
         # hosts we will ignore (in netloc format), in addition to the target URL
         self.allowlisted_hosts = [
             "fonts\.googleapis\.com", # does not use versioning so can't realistically use SRI
+            "fonts\.gstatic\.com", # does not use versioning so can't realistically use SRI
             "js\.hs-scripts\.com", # does not use versioning so can't realistically use SRI
             "www\.googletagmanager\.com", # does not use versioning so can't realistically use SRI
         ]           
