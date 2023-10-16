@@ -95,7 +95,7 @@ class SRICheck:
                 }
             }
 
-            browser = webdriver.Chrome("chromedriver", options=chrome_options)
+            browser = webdriver.Chrome(options=chrome_options)
 
             def interceptor(request):
                 request.headers.update(self.headers)
