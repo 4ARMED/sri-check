@@ -22,9 +22,12 @@ def generate_sha(remote_resource_tag):
 class SRICheck:
     def __init__(self, url):
         self.browser = False
-        self.headers = {}
+        self.headers = {
+            "User-Agent": "4ARMED SRI Check (https://github.com/4armed/sri-check)",
+        }
         self.skip_checks = False
         self.stdin = False
+        self.verbose = False
 
         if url == "-":
             self.stdin = True
@@ -54,10 +57,16 @@ class SRICheck:
         self.browser = browser
     
     def set_headers(self, headers):
-        self.headers = headers
+        self.headers = { 
+            **self.headers,
+            **headers
+        }
     
     def set_stdin(self, stdin):
         self.stdin = stdin
+    
+    def set_verbose(self, verbose):
+        self.verbose = verbose
     
     def add_allowlisted_host(self, pattern):
         self.allowlisted_hosts.append(pattern)
@@ -101,11 +110,11 @@ class SRICheck:
                 request.headers.update(self.headers)
 
             browser.request_interceptor = interceptor
-
             browser.get(self.url)
             return browser.page_source
         else:
             # file deepcode ignore Ssrf: The purpose of the script is to parse remote URLs from the CLI
+
             return requests.get(self.url, headers=self.headers).content
 
 
@@ -150,6 +159,9 @@ class SRICheck:
             html = sys.stdin.read()
         else:
             html = self.get_html()
+        
+        if self.verbose is True:
+            print(html)
 
         remote_resource_tags = self.get_remote_resource_tags(html)
 
@@ -163,8 +175,9 @@ def cli():
     parser.add_argument("-H", "--header", help="HTTP header value to send with the request. Specify multiple times if needed", action="append")
     parser.add_argument("-i", "--ignore", help="host to ignore when checking for SRI. e.g. cdn.4armed.com. Specify multiple times if needed", action="append")
     parser.add_argument("-I", "--ignore-regex", help="regex host to ignore when checking for SRI. e.g. .*\.4armed\.com. Specify multiple times if needed", action="append")
-    parser.add_argument("-q", "--quiet", help="Suppress output if all tags have SRI", action="store_true")
+    parser.add_argument("-q", "--quiet", help="Suppress output if all tags have SRI (deprecated: now default, use --verbose)", action="store_true")
     parser.add_argument("-z", "--zero-exit", help="Return zero exit code even if tags are found without SRI (default is exit 99)", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Enable verbose output", action="store_true")
     parser.add_argument("--version", action="version", version=metadata.version("sri-check"))
     parser.add_argument("url", help="Target URL to check for SRI (use - to read from stdin)")
     args = parser.parse_args()
@@ -185,6 +198,7 @@ def cli():
         s.set_headers(headers)
 
     s.set_browser(args.browser)
+    s.set_verbose(args.verbose)
 
     if args.ignore:
         for host in args.ignore:
@@ -207,7 +221,7 @@ def cli():
         if args.zero_exit is False:
             return 99
     else:
-        if args.quiet is False:
+        if args.verbose is True:
             print("[*] No resource tags found without integrity attribute")
         
     return 0
