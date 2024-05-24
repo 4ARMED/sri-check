@@ -111,7 +111,7 @@ class SRICheck:
 
             browser.request_interceptor = interceptor
             browser.get(self.url)
-            return browser.page_source
+            return browser.execute_script("return document.documentElement.outerHTML;")
         else:
             # file deepcode ignore Ssrf: The purpose of the script is to parse remote URLs from the CLI
 
