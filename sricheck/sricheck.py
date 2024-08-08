@@ -126,12 +126,19 @@ class SRICheck:
 
         if self.skip_checks is True:
             script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True})]
-            link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True})]
+            link_tags = [tag for tag in soup.find_all(['link'], attrs={
+                'href':True,
+                'rel': lambda x: x is not None and x in ['stylesheet', 'preload', 'modulepreload'],
+            })]
             resource_tags.extend(script_tags)
             resource_tags.extend(link_tags)
         else:
             script_tags = [tag for tag in soup.find_all(['script'], attrs={'src':True, 'integrity':None})]
-            link_tags = [tag for tag in soup.find_all(['link'], attrs={'href':True, 'integrity':None})]
+            link_tags = [tag for tag in soup.find_all(['link'], attrs={
+                'href':True, 
+                'integrity':None,
+                'rel': lambda x: x is not None and x in ['stylesheet', 'preload', 'modulepreload'],
+            })]
             resource_tags.extend(script_tags)
             resource_tags.extend(link_tags)
 
