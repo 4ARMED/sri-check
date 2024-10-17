@@ -3,6 +3,7 @@
 import argparse
 import base64
 import hashlib
+import os
 import re
 import sys
 import requests
@@ -91,10 +92,9 @@ class SRICheck:
 
     def get_html(self):
         if self.browser:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
+            from seleniumwire import webdriver
 
-            chrome_options = Options()
+            chrome_options = webdriver.ChromeOptions()
             chrome_options.add_argument("--headless")
             chrome_options.add_argument("--no-sandbox")
             chrome_options.add_argument("--disable-dev-shm-usage")
@@ -104,19 +104,30 @@ class SRICheck:
                 }
             }
 
-            browser = webdriver.Chrome(options=chrome_options)
+            browser = webdriver.Chrome(
+                options=chrome_options,
+                seleniumwire_options={
+                    'proxy': {
+                        'http': os.environ.get("http_proxy"),
+                        'https': os.environ.get("https_proxy"),
+                    }
+                }
+            )
 
             def interceptor(request):
-                request.headers.update(self.headers)
+                for key, value in self.headers.items():
+                    del request.headers[key]
+                    request.headers[key] = value
 
             browser.request_interceptor = interceptor
             browser.get(self.url)
-            return browser.execute_script("return document.documentElement.outerHTML;")
+            content = browser.execute_script("return document.documentElement.outerHTML;")
+
+            browser.quit()
+            return content
         else:
             # file deepcode ignore Ssrf: The purpose of the script is to parse remote URLs from the CLI
-
             return requests.get(self.url, headers=self.headers).content
-
 
     def get_remote_resource_tags(self, html):
         soup = BeautifulSoup(html, 'lxml')
