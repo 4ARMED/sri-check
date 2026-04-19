@@ -92,34 +92,28 @@ class SRICheck:
 
     def get_html(self):
         if self.browser:
-            from seleniumwire import webdriver
+            from selenium import webdriver
 
             chrome_options = webdriver.ChromeOptions()
-            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--headless=new")
             chrome_options.add_argument("--no-sandbox")
             chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.experimental_options["prefs"] = {
+            chrome_options.add_experimental_option("prefs", {
                 "profile.default_content_settings": {
                     "images": 2
                 }
-            }
+            })
 
-            browser = webdriver.Chrome(
-                options=chrome_options,
-                seleniumwire_options={
-                    'proxy': {
-                        'http': os.environ.get("http_proxy"),
-                        'https': os.environ.get("https_proxy"),
-                    }
-                }
+            proxy = os.environ.get("https_proxy") or os.environ.get("http_proxy")
+            if proxy:
+                chrome_options.add_argument(f"--proxy-server={proxy}")
+
+            browser = webdriver.Chrome(options=chrome_options)
+            browser.execute_cdp_cmd("Network.enable", {})
+            browser.execute_cdp_cmd(
+                "Network.setExtraHTTPHeaders",
+                {"headers": self.headers},
             )
-
-            def interceptor(request):
-                for key, value in self.headers.items():
-                    del request.headers[key]
-                    request.headers[key] = value
-
-            browser.request_interceptor = interceptor
             browser.get(self.url)
             content = browser.execute_script("return document.documentElement.outerHTML;")
 
